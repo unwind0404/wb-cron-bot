@@ -71,6 +71,7 @@ function showApp() {
   $('#app-screen').hidden = false
   loadShops()
   loadFeedbacks()
+  loadDrafts()
 }
 
 // ---------- tabs ----------
@@ -162,6 +163,13 @@ function renderShopFilter() {
     shopsCache.filter((s) => s.enabled).map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('')
   insSel.value = insCurrent
   $('#analyze-btn').disabled = !insSel.value
+
+  // селектор черновиков
+  const drSel = $('#drafts-shop')
+  const drCurrent = drSel.value
+  drSel.innerHTML = '<option value="">Все магазины</option>' +
+    shopsCache.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('')
+  drSel.value = drCurrent
 }
 
 $('#shop-form').addEventListener('submit', async (e) => {
@@ -187,6 +195,86 @@ $('#shop-form').addEventListener('submit', async (e) => {
     msg.className = 'hint error'
   }
 })
+
+// ---------- Черновики ----------
+
+async function loadDrafts() {
+  const shopId = $('#drafts-shop').value
+  const params = shopId ? `?shop_id=${shopId}` : ''
+  try {
+    const drafts = await api(`/api/drafts${params}`)
+    $('#drafts-count').textContent = `На одобрение: ${drafts.length}`
+    renderDrafts(drafts)
+  } catch (err) {
+    if (err.message.includes('Не авторизован')) location.reload()
+  }
+}
+
+function renderDrafts(drafts) {
+  const el = $('#drafts-list')
+  el.innerHTML = ''
+  if (drafts.length === 0) {
+    el.innerHTML = `<div class="empty"><span class="icon">📝</span>Черновиков нет.<br>Они появляются, когда у магазина включён режим «Черновики LLM» и бот сгенерировал ответ.</div>`
+    return
+  }
+  for (const fb of drafts) {
+    const card = document.createElement('div')
+    card.className = 'card'
+    card.innerHTML = `
+      <div class="fb-head">
+        <span class="stars">${stars(fb.rating)}</span>
+        <span class="fb-user">${esc(fb.user_name || 'Покупатель')}</span>
+        <span class="fb-shop">${esc(fb.shop_name || '')}</span>
+        <span class="fb-date">${fmtDate(fb.processed_at)}</span>
+      </div>
+      <div class="fb-product">${esc(fb.product_name || 'Товар')}</div>
+      <div class="fb-text">${esc(fb.text || '(отзыв без текста)')}</div>
+      <textarea class="draft-answer">${esc(fb.answer || '')}</textarea>
+      <div class="draft-actions">
+        <button class="primary approve">Одобрить и отправить</button>
+        <button class="ghost regen">Перегенерировать</button>
+        <button class="danger reject">Отклонить</button>
+      </div>`
+    card.querySelector('.approve').addEventListener('click', async () => {
+      try {
+        await api('/api/drafts', {
+          method: 'POST',
+          body: {
+            shop_id: fb.shop_id,
+            feedback_id: fb.id,
+            action: 'approve',
+            answer: card.querySelector('.draft-answer').value,
+          },
+        })
+        toast('Ответ отправлен на WB', 'ok')
+        loadDrafts()
+      } catch (err) { toast(err.message, 'error') }
+    })
+    card.querySelector('.regen').addEventListener('click', async () => {
+      try {
+        const r = await api('/api/drafts', {
+          method: 'POST',
+          body: { shop_id: fb.shop_id, feedback_id: fb.id, action: 'regenerate' },
+        })
+        card.querySelector('.draft-answer').value = r.answer
+        toast('Новый вариант готов', 'ok')
+      } catch (err) { toast(err.message, 'error') }
+    })
+    card.querySelector('.reject').addEventListener('click', async () => {
+      try {
+        await api('/api/drafts', {
+          method: 'POST',
+          body: { shop_id: fb.shop_id, feedback_id: fb.id, action: 'reject' },
+        })
+        toast('Черновик отклонён')
+        loadDrafts()
+      } catch (err) { toast(err.message, 'error') }
+    })
+    el.appendChild(card)
+  }
+}
+
+$('#drafts-shop').addEventListener('change', loadDrafts)
 
 // ---------- feedbacks ----------
 

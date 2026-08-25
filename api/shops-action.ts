@@ -17,8 +17,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (action === 'mode') {
-      if (mode !== 'templates' && mode !== 'llm') {
-        return res.status(400).json({ error: 'mode должен быть templates или llm' })
+      if (mode !== 'templates' && mode !== 'drafts' && mode !== 'llm') {
+        return res.status(400).json({ error: 'mode: templates, drafts или llm' })
       }
       await updateShopMode(id, mode)
     } else if (action === 'toggle') {

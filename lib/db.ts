@@ -50,7 +50,7 @@ export async function initDb(): Promise<void> {
       video_url     TEXT,
       video_preview TEXT,
       created_date  TIMESTAMPTZ,
-      status        TEXT        NOT NULL DEFAULT 'answered',
+      status       TEXT        NOT NULL DEFAULT 'answered', -- answered | draft | rejected | error
       answer        TEXT,
       source        TEXT,
       error         TEXT,
@@ -76,7 +76,7 @@ export async function initDb(): Promise<void> {
 
 // ---------- Магазины ----------
 
-export type ShopMode = 'templates' | 'llm'
+export type ShopMode = 'templates' | 'drafts' | 'llm'
 
 export type Shop = {
   id: number
@@ -224,9 +224,12 @@ export async function saveFeedback(
   answer: string | null,
   source: string | null,
   error: string | null,
+  status?: 'answered' | 'draft' | 'error',
 ): Promise<void> {
   const db = getDb()
   if (!db) return
+
+  const finalStatus = status ?? (error ? 'error' : 'answered')
 
   await db`
     INSERT INTO feedbacks
@@ -237,7 +240,7 @@ export async function saveFeedback(
        ${fb.userName ?? null}, ${fb.rating ?? null}, ${fb.text ?? null}, ${fb.pros ?? null}, ${fb.cons ?? null},
        ${db.json(fb.photoLinks ?? [])}, ${fb.videoUrl ?? null}, ${fb.videoPreview ?? null},
        ${fb.createdDate ? new Date(fb.createdDate) : null},
-       ${error ? 'error' : 'answered'}, ${answer}, ${source}, ${error})
+       ${finalStatus}, ${answer}, ${source}, ${error})
     ON CONFLICT (id, shop_id) DO NOTHING
   `
 }
@@ -261,4 +264,19 @@ export async function listFeedbacksSince(
     LIMIT 500
   ` as FeedbackRow[]
 }
+
+/** Обновить черновик: отредактированный текст и статус (answered/rejected). */
+export async function updateFeedbackDraft(
+  shopId: number,
+  feedbackId: string,
+  answer: string,
+  status: 'answered' | 'rejected',
+): Promise<void> {
+  const db = getDb()
+  if (!db) throw new Error('БД не настроена (DATABASE_URL)')
+  await db`
+    UPDATE feedbacks
+    SET answer = ${answer}, status = ${status}
+    WHERE id = ${feedbackId} AND shop_id = ${shopId} AND status = 'draft'
+  `
 }

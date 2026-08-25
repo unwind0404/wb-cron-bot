@@ -433,6 +433,33 @@ select.mode-select {
 .theme-positive { border-left: 3px solid var(--ok); }
 .theme-neutral { border-left: 3px solid var(--muted); }
 
+/* ---------- Drafts (черновики) ---------- */
+
+.draft-answer {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.draft-answer:focus { border-color: var(--accent2); }
+
+.draft-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.draft-actions button { padding: 9px 16px; font-size: 0.88rem; }
+
 /* ---------- Toast ---------- */
 #toast {
   position: fixed;

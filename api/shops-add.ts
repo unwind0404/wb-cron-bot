@@ -12,7 +12,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!name?.trim() || !token?.trim()) {
     return res.status(400).json({ error: 'Нужны name и token' })
   }
-  const validMode = mode === 'llm' ? 'llm' : 'templates'
+  const validModes = ['templates', 'drafts', 'llm']
+  if (!validModes.includes(validMode)) {
+    return res.status(400).json({ error: 'mode: templates, drafts или llm' })
+  }
 
   // проверяем токен перед сохранением
   try {

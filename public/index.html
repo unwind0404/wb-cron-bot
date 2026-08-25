@@ -26,6 +26,7 @@
       <h1>WB Review Bot</h1>
       <nav>
         <button data-tab="shops" class="active">Магазины</button>
+        <button data-tab="drafts">Черновики</button>
         <button data-tab="feedbacks">Отзывы</button>
         <button data-tab="insights">Аналитика</button>
       </nav>
@@ -68,6 +69,15 @@
           За месяц анализ также запускается автоматически каждое воскресенье.
         </p>
         <div id="insights-list"></div>
+      </section>
+
+      <!-- Черновики -->
+      <section id="tab-drafts" hidden>
+        <div class="toolbar">
+          <select id="drafts-shop"><option value="">Все магазины</option></select>
+          <span class="hint" id="drafts-count"></span>
+        </div>
+        <div id="drafts-list"></div>
       </section>
 
       <!-- Отзывы -->

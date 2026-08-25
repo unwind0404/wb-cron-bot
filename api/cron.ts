@@ -94,13 +94,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           createdDate: fb.createdDate,
         }
         try {
-          const { answer, source } = await generateAnswer(input, target.mode)
-          await client.answerFeedback(fb.id, answer)
-          totalAnswered++
-          const stars = '★'.repeat(fb.productValuation ?? 0)
-          details.push(`${stars} ${target.name}: ${source === 'template' ? 'шаблон' : 'LLM'}`)
-          await saveFeedback(target.shopId ?? 0, media, answer, source, null)
-          console.log(`[cron] отвечено на ${fb.id} (${source})`)
+          if (target.mode === 'drafts') {
+            // Черновик: генерируем ответ, но НЕ отправляем — ждём одобрения в панели
+            const { answer, source } = await generateAnswer(input, 'llm')
+            await saveFeedback(target.shopId ?? 0, media, answer, source, null, 'draft')
+            details.push(`📝 ${target.name}: черновик готов`)
+            console.log(`[cron] черновик готов для ${fb.id}`)
+          } else {
+            const { answer, source } = await generateAnswer(input, target.mode)
+            await client.answerFeedback(fb.id, answer)
+            totalAnswered++
+            const stars = '★'.repeat(fb.productValuation ?? 0)
+            details.push(`${stars} ${target.name}: ${source === 'template' ? 'шаблон' : 'LLM'}`)
+            await saveFeedback(target.shopId ?? 0, media, answer, source, null)
+            console.log(`[cron] отвечено на ${fb.id} (${source})`)
+          }
         } catch (e) {
           totalFailed++
           const msg = e instanceof Error ? e.message : String(e)
