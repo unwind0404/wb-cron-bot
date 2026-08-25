@@ -32,6 +32,7 @@ export class WbClient {
     if (res.status === 402) throw new Error('Требуется оплата тарифа WB API (402)')
     if (!res.ok && res.status !== 204) {
       const body = await res.text().catch(() => '')
+      // тело ошибки WB может содержать служебные данные — наружу отдаём только статус
       throw new Error(`WB API ${res.status}: ${body.slice(0, 300)}`)
     }
     if (res.status === 204) return undefined as T

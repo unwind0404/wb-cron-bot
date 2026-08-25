@@ -8,11 +8,14 @@ import { generateAnswer } from '../lib/generator.js'
 import { reportRun, reportError, isTelegramConfigured } from '../lib/telegram.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Авторизация: либо вызов от Vercel Cron, либо ручной запуск с CRON_SECRET
+  // Авторизация: либо вызов от Vercel Cron, либо ручной запуск с CRON_SECRET.
+  // ВАЖНО: если CRON_SECRET не задан, ручной запуск запрещён, а заголовок
+  // x-vercel-cron принимается только от реального Vercel Cron (Vercel
+  // блокирует этот заголовок из внешних запросов на серверлесс-функциях).
   const isVercelCron = req.headers['x-vercel-cron'] !== undefined
   const authHeader = req.headers.authorization
   const secret = process.env.CRON_SECRET
-  const isManualAuthorized = secret && authHeader === `Bearer ${secret}`
+  const isManualAuthorized = Boolean(secret) && authHeader === `Bearer ${secret}`
 
   if (!isVercelCron && !isManualAuthorized) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -34,7 +37,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (feedbacks.length === 0) {
       await reportRun({ total: 0, answered: 0, failed: 0, details: ['Новых отзывов нет 🎉'] })
-      return res.status(200).json({ ok: true, total: 0, answered: 0, failed: 0 })
+      return res.status(200).json({
+        ok: true,
+        total: 0,
+        answered: 0,
+        failed: 0,
+        telegram: isTelegramConfigured() ? 'sent' : 'skipped (не настроен)',
+      })
     }
 
     let answered = 0
@@ -71,6 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const msg = e instanceof Error ? e.message : String(e)
     console.error('[cron] фатальная ошибка:', msg)
     await reportError('Запуск cron', msg)
-    return res.status(500).json({ error: msg })
+    // наружу не отдаём детали ошибки (могут содержать служебную информацию)
+    return res.status(500).json({ error: 'Internal error, детали в логах Vercel' })
   }
 }
