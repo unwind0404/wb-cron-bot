@@ -7,6 +7,12 @@ function config() {
   }
 }
 
+/** Telegram опционален: отчёты шлются только если заданы обе переменные. */
+export function isTelegramConfigured(): boolean {
+  const { botToken, chatId } = config()
+  return Boolean(botToken && chatId)
+}
+
 async function sendMessage(text: string): Promise<boolean> {
   const { botToken, chatId } = config()
   if (!botToken || !chatId) {

@@ -5,7 +5,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { WbClient, type WbFeedback } from '../lib/wb-client.js'
 import { generateAnswer } from '../lib/generator.js'
-import { reportRun, reportError } from '../lib/telegram.js'
+import { reportRun, reportError, isTelegramConfigured } from '../lib/telegram.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Авторизация: либо вызов от Vercel Cron, либо ручной запуск с CRON_SECRET
@@ -20,8 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const token = process.env.WB_API_TOKEN
   if (!token) {
-    await reportError('Конфигурация', 'Не задан WB_API_TOKEN')
-    return res.status(500).json({ error: 'WB_API_TOKEN not set' })
+    const msg = 'WB_API_TOKEN not set'
+    console.error('[cron]', msg)
+    return res.status(500).json({ error: msg })
   }
 
   console.log('[cron] старт')
@@ -59,7 +60,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     await reportRun({ total: feedbacks.length, answered, failed, details })
-    return res.status(200).json({ ok: true, total: feedbacks.length, answered, failed })
+    return res.status(200).json({
+      ok: true,
+      total: feedbacks.length,
+      answered,
+      failed,
+      telegram: isTelegramConfigured() ? 'sent' : 'skipped (не настроен)',
+    })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.error('[cron] фатальная ошибка:', msg)
