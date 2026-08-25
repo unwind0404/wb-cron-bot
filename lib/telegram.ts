@@ -5,7 +5,7 @@ export function isTelegramConfigured(): boolean {
   return Boolean(process.env.TG_BOT_TOKEN && process.env.TG_CHAT_ID)
 }
 
-async function sendMessage(text: string): Promise<boolean> {
+export async function sendMessage(text: string): Promise<boolean> {
   if (!isTelegramConfigured()) {
     console.log('[tg] не настроен, пропускаю уведомление')
     return false
