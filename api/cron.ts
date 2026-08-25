@@ -3,9 +3,9 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { WbClient, type WbFeedback } from '../lib/wb-client.js'
-import { generateAnswer, type FeedbackInput } from '../lib/generator.js'
+import { generateAnswer } from '../lib/generator.js'
 import { reportRun, reportError, isTelegramConfigured } from '../lib/telegram.js'
-import { getDb, initDb, listShops, saveFeedback, type Shop } from '../lib/db.js'
+import { getDb, initDb, listShops, saveFeedback, type FeedbackInput } from '../lib/db.js'
 
 type Target = { shopId: number | null; name: string; token: string; mode: string }
 
@@ -68,13 +68,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log(`[cron] ${target.name}: неотвеченных ${feedbacks.length}`)
 
       for (const fb of feedbacks) {
+        const video = fb.video ?? null
         const input: FeedbackInput = {
           rating: fb.productValuation,
           text: fb.text,
           pros: fb.pros,
           cons: fb.cons,
           productName: fb.productDetails?.productName,
+          subjectName: fb.subjectName,
           userName: fb.userName,
+        }
+        const media = {
+          nmId: fb.productDetails?.nmId,
+          productName: fb.productDetails?.productName,
+          subjectName: fb.subjectName,
+          userName: fb.userName,
+          rating: fb.productValuation,
+          text: fb.text,
+          pros: fb.pros,
+          cons: fb.cons,
+          photoLinks: fb.photoLinks ?? [],
+          videoUrl: video?.src ?? null,
+          videoPreview: video?.preview ?? null,
+          createdDate: fb.createdDate,
         }
         try {
           const { answer, source } = await generateAnswer(input, target.mode)
@@ -82,33 +98,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           totalAnswered++
           const stars = '★'.repeat(fb.productValuation ?? 0)
           details.push(`${stars} ${target.name}: ${source === 'template' ? 'шаблон' : 'LLM'}`)
-          await saveFeedback(target.shopId ?? 0, {
-            id: fb.id,
-            nmId: fb.productDetails?.nmId,
-            productName: fb.productDetails?.productName,
-            userName: fb.userName,
-            rating: fb.productValuation,
-            text: fb.text,
-            pros: fb.pros,
-            cons: fb.cons,
-            createdDate: fb.createdDate,
-          }, answer, source, null)
+          await saveFeedback(target.shopId ?? 0, media, answer, source, null)
           console.log(`[cron] отвечено на ${fb.id} (${source})`)
         } catch (e) {
           totalFailed++
           const msg = e instanceof Error ? e.message : String(e)
           details.push(`❌ ${target.name} ${fb.id}: ${msg.slice(0, 80)}`)
-          await saveFeedback(target.shopId ?? 0, {
-            id: fb.id,
-            nmId: fb.productDetails?.nmId,
-            productName: fb.productDetails?.productName,
-            userName: fb.userName,
-            rating: fb.productValuation,
-            text: fb.text,
-            pros: fb.pros,
-            cons: fb.cons,
-            createdDate: fb.createdDate,
-          }, null, null, msg)
+          await saveFeedback(target.shopId ?? 0, media, null, null, msg)
           console.error(`[cron] ошибка на ${fb.id}:`, msg)
         }
         // пауза между обращениями к WB API (лимит 3 req/s, берём запас)

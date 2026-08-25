@@ -205,21 +205,58 @@ function renderFeedbacks(list) {
   }
   for (const fb of list) {
     const card = document.createElement('div')
-    card.className = 'card'
+    card.className = 'card fb-card'
+
+    // Медиа: фото и видео покупателя
+    const photos = Array.isArray(fb.photo_links) ? fb.photo_links : []
+    const mediaHtml = (photos.length || fb.video_preview || fb.video_url)
+      ? `<div class="fb-media">${
+          photos.map((src) =>
+            `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" loading="lazy" alt="фото отзыва" /></a>`
+          ).join('')
+        }${
+          fb.video_url
+            ? fb.video_preview
+              ? `<a href="${esc(fb.video_url)}" target="_blank" rel="noopener" class="video-thumb"><img src="${esc(fb.video_preview)}" loading="lazy" alt="видео отзыва" /><span class="play">▶</span></a>`
+              : `<a href="${esc(fb.video_url)}" target="_blank" rel="noopener" class="video-link">🎬 Видео</a>`
+            : ''
+        }</div>`
+      : ''
+
+    // Характеристики товара
+    const specs = [
+      fb.nm_id ? `Артикул: <b>${fb.nm_id}</b>` : '',
+      fb.subject_name ? `Категория: ${esc(fb.subject_name)}` : '',
+    ].filter(Boolean)
+    const specsHtml = specs.length
+      ? `<div class="fb-specs">${specs.map((s) => `<span>${s}</span>`).join('')}</div>`
+      : ''
+
+    // Плюсы/минусы
+    const prosCons = [
+      fb.pros ? `<span class="pc pros">+ ${esc(fb.pros)}</span>` : '',
+      fb.cons ? `<span class="pc cons">− ${esc(fb.cons)}</span>` : '',
+    ].filter(Boolean).join('')
+
     const answerHtml = fb.answer
       ? `<div class="fb-answer"><span class="label">Ответ бота (${fb.source === 'template' ? 'шаблон' : 'LLM'})</span>${esc(fb.answer)}</div>`
       : ''
     const errorHtml = fb.error
       ? `<div class="fb-error">⚠️ ${esc(fb.error)}</div>`
       : ''
+
     card.innerHTML = `
       <div class="fb-head">
         <span class="stars">${stars(fb.rating)}</span>
-        <span class="fb-product">${esc(fb.product_name || 'Товар')}</span>
+        <span class="fb-user">${esc(fb.user_name || 'Покупатель')}</span>
         <span class="fb-shop">${esc(fb.shop_name || '')}</span>
         <span class="fb-date">${fmtDate(fb.processed_at)}</span>
       </div>
+      <div class="fb-product">${esc(fb.product_name || 'Товар')}</div>
+      ${specsHtml}
+      ${prosCons ? `<div class="fb-pc">${prosCons}</div>` : ''}
       <div class="fb-text">${esc(fb.text || '(отзыв без текста)')}</div>
+      ${mediaHtml}
       ${answerHtml}
       ${errorHtml}
     `
