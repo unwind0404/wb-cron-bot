@@ -4,8 +4,6 @@
 
 import postgres from 'postgres'
 
-const { join } = postgres
-
 type Sql = ReturnType<typeof postgres>
 
 let client: Sql | null = null
@@ -187,9 +185,9 @@ export async function listFeedbacks(
   const db = getDb()
   if (!db) return []
 
-  const conditions = [db`true`]
-  if (shopId !== null) conditions.push(db`f.shop_id = ${shopId}`)
-  if (status) conditions.push(db`f.status = ${status}`)
+  // Динамическая сборка WHERE: фрагменты объединяются вручную
+  const whereShop = shopId !== null ? db`f.shop_id = ${shopId}` : db`true`
+  const whereStatus = status ? db`f.status = ${status}` : db`true`
 
   return await db`
     SELECT f.id, f.shop_id, s.name AS shop_name, f.nm_id, f.product_name, f.subject_name,
@@ -197,7 +195,7 @@ export async function listFeedbacks(
            f.video_preview, f.status, f.answer, f.source, f.error, f.processed_at
     FROM feedbacks f
     JOIN shops s ON s.id = f.shop_id
-    WHERE ${join(conditions, db` AND `)}
+    WHERE ${whereShop} AND ${whereStatus}
     ORDER BY f.processed_at DESC
     LIMIT ${limit}
   ` as FeedbackRow[]
