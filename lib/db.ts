@@ -245,6 +245,31 @@ export async function saveFeedback(
   `
 }
 
+/** История обработанных отзывов с фильтрами (для панели). */
+export async function listFeedbacks(
+  shopId: number | null,
+  status: string | null,
+  limit = 200,
+): Promise<FeedbackRow[]> {
+  const db = getDb()
+  if (!db) return []
+
+  // Динамическая сборка WHERE: фрагменты объединяются вручную
+  const whereShop = shopId !== null ? db`f.shop_id = ${shopId}` : db`true`
+  const whereStatus = status ? db`f.status = ${status}` : db`true`
+
+  return await db`
+    SELECT f.id, f.shop_id, s.name AS shop_name, f.nm_id, f.product_name, f.subject_name,
+           f.user_name, f.rating, f.text, f.pros, f.cons, f.photo_links, f.video_url,
+           f.video_preview, f.status, f.answer, f.source, f.error, f.processed_at
+    FROM feedbacks f
+    JOIN shops s ON s.id = f.shop_id
+    WHERE ${whereShop} AND ${whereStatus}
+    ORDER BY f.processed_at DESC
+    LIMIT ${limit}
+  ` as FeedbackRow[]
+}
+
 /** Отзывы магазина за последние N дней (для анализа). */
 export async function listFeedbacksSince(
   shopId: number,
