@@ -1,6 +1,10 @@
 {
   "name": "wb-cron-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@vercel/node": "^5.1.0",
+    "postgres": "^3.4.7"
+  }
 }

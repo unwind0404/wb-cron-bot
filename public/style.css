@@ -1,0 +1,318 @@
+:root {
+  color-scheme: dark;
+  --bg: #12141a;
+  --card: #1a1d26;
+  --border: #2a2e3a;
+  --accent: #7c9cff;
+  --accent2: #b57cff;
+  --text: #e6e8ee;
+  --muted: #9aa0b0;
+  --danger: #ff6b6b;
+  --ok: #6bcb84;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.screen[hidden] { display: none; }
+
+/* ---------- Auth ---------- */
+#auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 20px;
+}
+
+.auth-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: min(400px, 100%);
+  text-align: center;
+}
+
+.auth-box h1 {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle { color: var(--muted); margin: 0 0 24px; font-size: 0.9rem; }
+
+.auth-box form { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---------- Inputs & buttons ---------- */
+input, select {
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus, select:focus { border-color: var(--accent); }
+
+button {
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #12141a;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+button:hover { opacity: 0.88; }
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.5; cursor: wait; }
+
+button.ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+button.ghost:hover { color: var(--text); border-color: var(--accent); }
+
+button.danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+button.danger:hover { border-color: var(--danger); }
+
+/* ---------- Layout ---------- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(18, 20, 26, 0.92);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+nav { display: flex; gap: 8px; }
+
+nav button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  font-weight: 500;
+}
+
+nav button.active {
+  color: var(--text);
+  background: var(--card);
+  border-color: var(--border);
+}
+
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+section[hidden] { display: none; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.form-card h2 { margin: 0 0 14px; font-size: 1.05rem; }
+
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.row input, .row select { flex: 1; min-width: 180px; }
+.row button { flex-shrink: 0; }
+
+.hint { color: var(--muted); font-size: 0.82rem; margin: 6px 0 0; }
+.hint.error { color: var(--danger); }
+.hint.ok { color: var(--ok); }
+
+/* ---------- Shop card ---------- */
+.shop-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.shop-info strong { font-size: 1rem; }
+.shop-info .meta { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(124, 156, 255, 0.15);
+  color: var(--accent);
+  margin-left: 8px;
+}
+
+.badge.off { background: rgba(255, 107, 107, 0.12); color: var(--danger); }
+
+.shop-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.shop-actions button { padding: 8px 14px; font-size: 0.85rem; }
+
+select.mode-select {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.toolbar select { min-width: 160px; }
+.toolbar .spacer { flex: 1; }
+
+/* ---------- Feedback card ---------- */
+.fb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.stars { color: #f5b83d; letter-spacing: 2px; font-size: 0.9rem; }
+
+.fb-product { font-weight: 600; }
+
+.fb-shop {
+  font-size: 0.75rem;
+  color: var(--accent);
+  background: rgba(124, 156, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.fb-date { color: var(--muted); font-size: 0.75rem; margin-left: auto; }
+
+.fb-text {
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+}
+
+.fb-answer {
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+.fb-answer .label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.fb-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  background: rgba(255, 107, 107, 0.08);
+  border-left: 3px solid var(--danger);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 48px 20px;
+}
+
+.empty .icon { font-size: 2.4rem; display: block; margin-bottom: 12px; }
+
+/* ---------- Toast ---------- */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 90vw;
+}
+
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.error { border-color: var(--danger); color: var(--danger); }
+#toast.ok { border-color: var(--ok); }
+
+@media (max-width: 600px) {
+  header { padding: 12px 16px; }
+  main { padding: 16px 12px 60px; }
+  .fb-date { margin-left: 0; width: 100%; }
+}

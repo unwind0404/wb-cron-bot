@@ -98,11 +98,12 @@ export async function llmAnswer(fb: FeedbackInput): Promise<string> {
   throw new Error('Обе LLM-модели недоступны')
 }
 
-/** Режим: templates | llm */
+/** Режим: templates | llm. mode можно передать явно (для магазина из БД). */
 export async function generateAnswer(
   fb: FeedbackInput,
+  modeOverride?: string,
 ): Promise<{ answer: string; source: 'template' | 'llm' }> {
-  const mode = process.env.ANSWER_MODE || 'templates'
+  const mode = modeOverride || process.env.ANSWER_MODE || 'templates'
   if (mode === 'templates') return { answer: templateAnswer(fb.rating), source: 'template' }
   const answer = await llmAnswer(fb)
   return { answer, source: 'llm' }

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WB Review Bot</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Экран входа -->
+  <div id="auth-screen" class="screen" hidden>
+    <div class="auth-box">
+      <h1>WB Review Bot</h1>
+      <p class="subtitle">Панель управления автоответами</p>
+      <form id="auth-form">
+        <input id="auth-password" type="password" placeholder="Пароль администратора" autocomplete="current-password" required />
+        <button type="submit">Войти</button>
+        <p class="hint error" id="auth-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Панель -->
+  <div id="app-screen" class="screen" hidden>
+    <header>
+      <h1>WB Review Bot</h1>
+      <nav>
+        <button data-tab="shops" class="active">Магазины</button>
+        <button data-tab="feedbacks">Отзывы</button>
+      </nav>
+      <button id="logout-btn" class="ghost">Выйти</button>
+    </header>
+
+    <main>
+      <!-- Магазины -->
+      <section id="tab-shops">
+        <form id="shop-form" class="card form-card">
+          <h2>Добавить магазин</h2>
+          <div class="row">
+            <input id="shop-name" placeholder="Название магазина" required />
+            <input id="shop-token" placeholder="WB API токен" required />
+          </div>
+          <div class="row">
+            <select id="shop-mode">
+              <option value="templates">Шаблоны (ответ по звёздам)</option>
+              <option value="llm">LLM (умный ответ через ИИ)</option>
+            </select>
+            <button type="submit" class="primary">Добавить</button>
+          </div>
+          <p class="hint" id="shop-msg"></p>
+        </form>
+        <div id="shops-list"></div>
+      </section>
+
+      <!-- Отзывы -->
+      <section id="tab-feedbacks" hidden>
+        <div class="toolbar">
+          <select id="filter-shop"><option value="">Все магазины</option></select>
+          <select id="filter-status">
+            <option value="">Все статусы</option>
+            <option value="answered">Отвеченные</option>
+            <option value="error">С ошибками</option>
+          </select>
+          <button id="refresh-btn" class="ghost">Обновить</button>
+          <button id="run-now-btn" class="primary">Запустить сейчас</button>
+        </div>
+        <div id="feedbacks-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
