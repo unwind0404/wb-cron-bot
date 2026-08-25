@@ -27,6 +27,7 @@
       <nav>
         <button data-tab="shops" class="active">Магазины</button>
         <button data-tab="feedbacks">Отзывы</button>
+        <button data-tab="insights">Аналитика</button>
       </nav>
       <button id="logout-btn" class="ghost">Выйти</button>
     </header>
@@ -50,6 +51,23 @@
           <p class="hint" id="shop-msg"></p>
         </form>
         <div id="shops-list"></div>
+      </section>
+
+      <!-- Аналитика -->
+      <section id="tab-insights" hidden>
+        <div class="toolbar">
+          <select id="insights-shop"><option value="">Выберите магазин</option></select>
+          <select id="insights-period">
+            <option value="month">За месяц</option>
+            <option value="quarter">За 3 месяца</option>
+          </select>
+          <button id="analyze-btn" class="primary" disabled>Анализировать</button>
+        </div>
+        <p class="hint" style="margin-bottom:16px">
+          LLM сгруппирует отзывы по темам, выделит проблемы и даст рекомендации.
+          За месяц анализ также запускается автоматически каждое воскресенье.
+        </p>
+        <div id="insights-list"></div>
       </section>
 
       <!-- Отзывы -->

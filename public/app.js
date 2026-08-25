@@ -154,6 +154,14 @@ function renderShopFilter() {
   sel.innerHTML = '<option value="">Все магазины</option>' +
     shopsCache.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('')
   sel.value = current
+
+  // селектор аналитики — только активные магазины
+  const insSel = $('#insights-shop')
+  const insCurrent = insSel.value
+  insSel.innerHTML = '<option value="">Выберите магазин</option>' +
+    shopsCache.filter((s) => s.enabled).map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('')
+  insSel.value = insCurrent
+  $('#analyze-btn').disabled = !insSel.value
 }
 
 $('#shop-form').addEventListener('submit', async (e) => {
@@ -281,6 +289,96 @@ $('#run-now-btn').addEventListener('click', async (e) => {
   } finally {
     btn.disabled = false
     btn.textContent = 'Запустить сейчас'
+  }
+})
+
+// ---------- Аналитика (insights) ----------
+
+function renderInsightCard(insight) {
+  const card = document.createElement('div')
+  card.className = 'card insight-card'
+
+  const periodNames = { month: 'Месяц', quarter: '3 месяца' }
+  const sentimentIcons = { negative: '🔴', positive: '🟢', neutral: '⚪' }
+
+  const themesHtml = (insight.themes || [])
+    .map((t) => {
+      const rec = t.recommendation
+        ? `<div class="theme-rec">💡 ${esc(t.recommendation)}</div>`
+        : ''
+      const quotes = (t.quotes || []).length
+        ? `<div class="theme-quotes">${t.quotes.map((q) => `«${esc(q)}»`).join('<br>')}</div>`
+        : ''
+      return `
+        <div class="theme theme-${t.sentiment}">
+          <div class="theme-head">
+            <span>${sentimentIcons[t.sentiment] || '⚪'}</span>
+            <strong>${esc(t.title)}</strong>
+            <span class="theme-count">${t.count} отз.</span>
+          </div>
+          <div class="theme-summary">${esc(t.summary)}</div>
+          ${quotes}
+          ${rec}
+        </div>`
+    })
+    .join('')
+
+  card.innerHTML = `
+    <div class="fb-head">
+      <strong>Анализ: ${esc(insight.shop_name || '')}</strong>
+      <span class="badge">${periodNames[insight.period] || insight.period}</span>
+      <span class="fb-date">${fmtDate(insight.created_at)} · отзывов: ${insight.feedbacks_count}</span>
+    </div>
+    <div class="insight-overview">${esc(insight.overview)}</div>
+    ${themesHtml || '<p class="hint">Тем не найдено.</p>'}
+  `
+  return card
+}
+
+async function loadInsights() {
+  const shopId = $('#insights-shop').value
+  const list = $('#insights-list')
+  if (!shopId) {
+    list.innerHTML = `<div class="empty"><span class="icon">📊</span>Выберите магазин для анализа.</div>`
+    return
+  }
+  try {
+    const insights = await api(`/api/insights?shop_id=${shopId}`)
+    list.innerHTML = ''
+    if (insights.length === 0) {
+      list.innerHTML = `<div class="empty"><span class="icon">📊</span>Анализов пока нет.<br>Нажмите «Анализировать» — LLM сгруппирует отзывы по темам.</div>`
+      return
+    }
+    insights.forEach((i) => list.appendChild(renderInsightCard(i)))
+  } catch (err) {
+    toast(err.message, 'error')
+  }
+}
+
+$('#insights-shop').addEventListener('change', loadInsights)
+
+$('#analyze-btn').addEventListener('click', async (e) => {
+  const shopId = $('#insights-shop').value
+  if (!shopId) return toast('Сначала выберите магазин', 'error')
+  const btn = e.target
+  btn.disabled = true
+  btn.textContent = 'Анализирую… (до минуты)'
+  try {
+    const r = await api('/api/insights', {
+      method: 'POST',
+      body: { shop_id: Number(shopId), period: $('#insights-period').value },
+    })
+    if (r.empty) {
+      toast(r.message, 'error')
+    } else {
+      toast(`Анализ готов: тем найдено ${r.themes?.length ?? 0}`, 'ok')
+      loadInsights()
+    }
+  } catch (err) {
+    toast(err.message, 'error')
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Анализировать'
   }
 })
 
