@@ -185,15 +185,19 @@ export async function listFeedbacks(
   const db = getDb()
   if (!db) return []
 
+  const conditions = [db`true`]
+  if (shopId !== null) conditions.push(db`f.shop_id = ${shopId}`)
+  if (status) conditions.push(db`f.status = ${status}`)
+
   return await db`
     SELECT f.id, f.shop_id, s.name AS shop_name, f.nm_id, f.product_name, f.subject_name,
            f.user_name, f.rating, f.text, f.pros, f.cons, f.photo_links, f.video_url,
            f.video_preview, f.status, f.answer, f.source, f.error, f.processed_at
     FROM feedbacks f
     JOIN shops s ON s.id = f.shop_id
-    WHERE (${shopId} IS NULL OR f.shop_id = ${shopId})
-      AND (${status} IS NULL OR f.status = ${status})
+    WHERE ${db.join(conditions, db` AND `)}
     ORDER BY f.processed_at DESC
     LIMIT ${limit}
   ` as FeedbackRow[]
+}
 }
