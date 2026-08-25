@@ -4,6 +4,8 @@
 
 import postgres from 'postgres'
 
+const { join } = postgres
+
 type Sql = ReturnType<typeof postgres>
 
 let client: Sql | null = null
@@ -195,7 +197,7 @@ export async function listFeedbacks(
            f.video_preview, f.status, f.answer, f.source, f.error, f.processed_at
     FROM feedbacks f
     JOIN shops s ON s.id = f.shop_id
-    WHERE ${db.join(conditions, db` AND `)}
+    WHERE ${join(conditions, db` AND `)}
     ORDER BY f.processed_at DESC
     LIMIT ${limit}
   ` as FeedbackRow[]
