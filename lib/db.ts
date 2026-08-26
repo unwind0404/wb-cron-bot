@@ -119,6 +119,11 @@ export async function setShopEnabled(id: number, enabled: boolean): Promise<void
   await db`UPDATE shops SET enabled = ${enabled} WHERE id = ${id}`
 }
 
+/** Алиас для панели (кнопка Вкл/Выкл). */
+export async function toggleShop(id: number, enabled: boolean): Promise<void> {
+  await setShopEnabled(id, enabled)
+}
+
 export async function deleteShop(id: number): Promise<void> {
   const db = getDb()
   if (!db) throw new Error('БД не настроена (DATABASE_URL)')
