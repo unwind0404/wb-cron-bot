@@ -101,8 +101,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             details.push(`📝 ${target.name}: черновик готов`)
             console.log(`[cron] черновик готов для ${fb.id}`)
           } else {
+            console.log(`[cron] генерирую ответ для ${fb.id} (режим ${target.mode})`)
             const { answer, source } = await generateAnswer(input, target.mode)
+            console.log(`[cron] ответ получен, отправляю на WB...`)
             await client.answerFeedback(fb.id, answer)
+            console.log(`[cron] отправлено, сохраняю в БД...`)
             totalAnswered++
             const stars = '★'.repeat(fb.productValuation ?? 0)
             details.push(`${stars} ${target.name}: ${source === 'template' ? 'шаблон' : 'LLM'}`)
@@ -113,8 +116,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           totalFailed++
           const msg = e instanceof Error ? e.message : String(e)
           details.push(`❌ ${target.name} ${fb.id}: ${msg.slice(0, 80)}`)
-          await saveFeedback(target.shopId ?? 0, media, null, null, msg)
           console.error(`[cron] ошибка на ${fb.id}:`, msg)
+          try {
+            await saveFeedback(target.shopId ?? 0, media, null, null, msg, 'error')
+          } catch (dbErr) {
+            console.error(`[cron] не удалось сохранить ошибку в БД:`, dbErr instanceof Error ? dbErr.message : dbErr)
+          }
         }
         // пауза между обращениями к WB API (лимит 3 req/s, берём запас)
         await new Promise((r) => setTimeout(r, 1500))
