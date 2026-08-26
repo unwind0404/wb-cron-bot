@@ -236,16 +236,19 @@ export async function saveFeedback(
 
   const finalStatus = status ?? (error ? 'error' : 'answered')
 
+  // Postgres-драйвер отвергает undefined — приводим всё к null/значениям
+  const v = (x: unknown) => (x === undefined ? null : x)
+
   await db`
     INSERT INTO feedbacks
       (id, shop_id, nm_id, product_name, subject_name, user_name, rating, text, pros, cons,
        photo_links, video_url, video_preview, created_date, status, answer, source, error)
     VALUES
-      (${fb.id}, ${shopId}, ${fb.nmId ?? null}, ${fb.productName ?? null}, ${fb.subjectName ?? null},
-       ${fb.userName ?? null}, ${fb.rating ?? null}, ${fb.text ?? null}, ${fb.pros ?? null}, ${fb.cons ?? null},
-       ${db.json(fb.photoLinks ?? [])}, ${fb.videoUrl ?? null}, ${fb.videoPreview ?? null},
+      (${fb.id}, ${shopId}, ${v(fb.nmId)}, ${v(fb.productName)}, ${v(fb.subjectName)},
+       ${v(fb.userName)}, ${v(fb.rating)}, ${v(fb.text)}, ${v(fb.pros)}, ${v(fb.cons)},
+       ${db.json(fb.photoLinks ?? [])}, ${v(fb.videoUrl)}, ${v(fb.videoPreview)},
        ${fb.createdDate ? new Date(fb.createdDate) : null},
-       ${finalStatus}, ${answer}, ${source}, ${error})
+       ${finalStatus}, ${v(answer)}, ${v(source)}, ${v(error)})
     ON CONFLICT (id, shop_id) DO NOTHING
   `
 }
