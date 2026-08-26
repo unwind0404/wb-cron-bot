@@ -247,6 +247,21 @@ export async function saveFeedback(
   const nmId = typeof fb.nmId === 'number' ? fb.nmId : null
   const rating = typeof fb.rating === 'number' ? fb.rating : null
   const createdDate = fb.createdDate ? new Date(fb.createdDate) : null
+  const createdDateSafe = createdDate && !isNaN(createdDate.getTime()) ? createdDate : null
+
+  // Отладка: ловим, какое поле остаётся undefined
+  const debugFields: Record<string, unknown> = {
+    id: fb.id, shopId, nmId, productName: v(fb.productName), subjectName: v(fb.subjectName),
+    userName: v(fb.userName), rating, text: v(fb.text), pros: v(fb.pros), cons: v(fb.cons),
+    photoLinks: photoLinks.length, videoUrl, videoPreview, createdDateSafe,
+    finalStatus, answer: v(answer), source: v(source), error: v(error),
+  }
+  const undefinedFields = Object.entries(debugFields)
+    .filter(([, val]) => val === undefined)
+    .map(([key]) => key)
+  if (undefinedFields.length > 0) {
+    console.error(`[db] UNDEFINED в полях: ${undefinedFields.join(', ')}`)
+  }
 
   await db`
     INSERT INTO feedbacks
