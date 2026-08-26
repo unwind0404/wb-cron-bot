@@ -105,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           userName: fb.userName ?? undefined,
         }
         const media = {
+          id: fb.id,
           nmId: fb.productDetails?.nmId ?? null,
           productName: fb.productDetails?.productName ?? null,
           subjectName: fb.subjectName ?? null,
