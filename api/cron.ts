@@ -68,7 +68,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       console.log(`[cron] ${target.name}: неотвеченных ${feedbacks.length}`)
 
-      for (const fb of feedbacks) {
+      // Базовый токен WB: лимит 5 запросов/час. За запуск обрабатываем
+      // минимум: 1 (список) + 1 (ответ) = 2 запроса. Берём 1 свежий отзыв.
+      const MAX_ANSWERS_PER_RUN = process.env.WB_TOKEN_TYPE === 'personal' ? 20 : 1
+      const toAnswer = feedbacks.slice(0, MAX_ANSWERS_PER_RUN)
+
+      for (const fb of toAnswer) {
         const video = fb.video ?? null
         const input: FeedbackInput = {
           rating: fb.productValuation ?? undefined,
@@ -118,13 +123,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           details.push(`❌ ${target.name} ${fb.id}: ${msg.slice(0, 80)}`)
           console.error(`[cron] ошибка на ${fb.id}:`, msg)
           try {
-            await saveFeedback(target.shopId ?? 0, media, null, null, msg, 'error')
+            await saveFeedback(target.shopId ?? 0, media, null, null, msg.slice(0, 400), 'error')
           } catch (dbErr) {
             console.error(`[cron] не удалось сохранить ошибку в БД:`, dbErr instanceof Error ? dbErr.message : dbErr)
           }
         }
-        // пауза между обращениями к WB API (лимит 3 req/s, берём запас)
-        await new Promise((r) => setTimeout(r, 1500))
+        // пауза между обращениями к WB API (для персонального токена)
+        if (MAX_ANSWERS_PER_RUN > 1) {
+          await new Promise((r) => setTimeout(r, 1500))
+        }
       }
     }
 
