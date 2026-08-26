@@ -78,8 +78,8 @@ async function askLLM(prompt: string): Promise<string> {
   if (!apiKey) throw new Error('Для анализа нужен OPENROUTER_API_KEY')
 
   const models = [
-    process.env.LLM_MODEL || 'deepseek/deepseek-chat-v3-0324:free',
-    process.env.LLM_FALLBACK_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+    process.env.LLM_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    process.env.LLM_FALLBACK_MODEL || 'minimax/minimax-m2.7:free',
   ]
 
   let lastError: Error = new Error('Модели не настроены')

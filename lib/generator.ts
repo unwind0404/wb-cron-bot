@@ -47,8 +47,8 @@ export function templateAnswer(rating = 3): string {
 // ---------- LLM ----------
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-const DEFAULT_MODEL = 'deepseek/deepseek-chat-v3-0324:free'
-const DEFAULT_FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free'
+const DEFAULT_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free'
+const DEFAULT_FALLBACK_MODEL = 'minimax/minimax-m2.7:free'
 
 function buildPrompt(fb: FeedbackInput): string {
   const stars = fb.rating ?? 3
