@@ -17,8 +17,11 @@ async function api(path, opts = {}) {
 }
 
 function toast(msg, type = '') {
-  const el = $('#toast') || Object.assign(document.createElement('div'), { id: 'toast' })
-  if (!el.isConnected) document.body.appendChild(el)
+  let el = document.getElementById('toast')
+  if (!el) {
+    el = Object.assign(document.createElement('div'), { id: 'toast' })
+    document.body.appendChild(el)
+  }
   el.textContent = msg
   el.className = `show ${type}`
   clearTimeout(el._t)
