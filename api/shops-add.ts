@@ -13,7 +13,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Нужны name и token' })
   }
   const validModes = ['templates', 'drafts', 'llm']
-  if (!validModes.includes(validMode)) {
+  const validMode = validModes.includes(mode ?? '') ? (mode as 'templates' | 'drafts' | 'llm') : 'templates'
+  if (mode !== undefined && !validModes.includes(mode)) {
     return res.status(400).json({ error: 'mode: templates, drafts или llm' })
   }
 
