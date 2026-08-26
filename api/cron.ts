@@ -88,7 +88,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Базовый токен WB: лимит 5 запросов/час. За запуск обрабатываем
       // минимум: 1 (список) + 1 (ответ) = 2 запроса. Берём 1 свежий отзыв.
-      const MAX_ANSWERS_PER_RUN = process.env.WB_TOKEN_TYPE === 'personal' ? 20 : 1
+      // Лимит функции Vercel free — 60с. С паузами 1.5с успеваем ~15 отзывов.
+      // Остальные обработает следующий запуск (cron ежедневно или вручную).
+      const MAX_ANSWERS_PER_RUN = process.env.WB_TOKEN_TYPE === 'personal' ? 10 : 1
       const toAnswer = feedbacks.slice(0, MAX_ANSWERS_PER_RUN)
 
       for (const fb of toAnswer) {
@@ -111,9 +113,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           text: fb.text ?? null,
           pros: fb.pros ?? null,
           cons: fb.cons ?? null,
-          photoLinks: fb.photoLinks ?? [],
-          videoUrl: video?.src ?? null,
-          videoPreview: video?.preview ?? null,
+          photoLinks: Array.isArray(fb.photoLinks) ? fb.photoLinks : [],
+          videoUrl: typeof video?.src === 'string' ? video.src : null,
+          videoPreview: typeof video?.preview === 'string' ? video.preview : null,
           createdDate: fb.createdDate ?? null,
         }
         try {
