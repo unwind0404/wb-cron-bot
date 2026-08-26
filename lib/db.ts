@@ -236,18 +236,27 @@ export async function saveFeedback(
 
   const finalStatus = status ?? (error ? 'error' : 'answered')
 
-  // Postgres-драйвер отвергает undefined — приводим всё к null/значениям
-  const v = (x: unknown) => (x === undefined ? null : x)
+  // Postgres-драйвер отвергает undefined — тотальная санитизация всех полей
+  const v = (x: unknown) => (x === undefined || x === null ? null : x)
+
+  const photoLinks = Array.isArray(fb.photoLinks)
+    ? fb.photoLinks.filter((p): p is string => typeof p === 'string')
+    : []
+  const videoUrl = typeof fb.videoUrl === 'string' ? fb.videoUrl : null
+  const videoPreview = typeof fb.videoPreview === 'string' ? fb.videoPreview : null
+  const nmId = typeof fb.nmId === 'number' ? fb.nmId : null
+  const rating = typeof fb.rating === 'number' ? fb.rating : null
+  const createdDate = fb.createdDate ? new Date(fb.createdDate) : null
 
   await db`
     INSERT INTO feedbacks
       (id, shop_id, nm_id, product_name, subject_name, user_name, rating, text, pros, cons,
        photo_links, video_url, video_preview, created_date, status, answer, source, error)
     VALUES
-      (${fb.id}, ${shopId}, ${v(fb.nmId)}, ${v(fb.productName)}, ${v(fb.subjectName)},
-       ${v(fb.userName)}, ${v(fb.rating)}, ${v(fb.text)}, ${v(fb.pros)}, ${v(fb.cons)},
-       ${db.json(fb.photoLinks ?? [])}, ${v(fb.videoUrl)}, ${v(fb.videoPreview)},
-       ${fb.createdDate ? new Date(fb.createdDate) : null},
+      (${fb.id}, ${shopId}, ${nmId}, ${v(fb.productName)}, ${v(fb.subjectName)},
+       ${v(fb.userName)}, ${rating}, ${v(fb.text)}, ${v(fb.pros)}, ${v(fb.cons)},
+       ${db.json(photoLinks)}, ${videoUrl}, ${videoPreview},
+       ${createdDate},
        ${finalStatus}, ${v(answer)}, ${v(source)}, ${v(error)})
     ON CONFLICT (id, shop_id) DO NOTHING
   `

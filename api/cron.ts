@@ -2,7 +2,7 @@
 // Работает с магазинами из БД; если БД не настроена — с env-магазином (WB_API_TOKEN).
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { WbClient, type WbFeedback } from '../lib/wb-client.js'
+import { WbClient, RateLimitError, type WbFeedback } from '../lib/wb-client.js'
 import { generateAnswer } from '../lib/generator.js'
 import { reportRun, reportError, isTelegramConfigured, sendMessage } from '../lib/telegram.js'
 import { getDb, initDb, listShops, saveFeedback, listFeedbacksSince, saveInsight, type FeedbackInput } from '../lib/db.js'
@@ -61,10 +61,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         feedbacks = await client.getUnansweredFeedbacks()
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e)
-        details.push(`❌ ${target.name}: ${msg.slice(0, 80)}`)
-        totalFailed++
-        continue
+        if (e instanceof RateLimitError) {
+          // Лимит WB: ждём столько, сколько сказал WB (макс. 55с — лимит функции),
+          // затем ОДНА повторная попытка. Если снова 429 — выходим без стука.
+          const wait = Math.min(e.retryAfterSec, 55)
+          console.log(`[cron] ${target.name}: 429, жду ${wait}с и пробую ещё раз`)
+          await new Promise((r) => setTimeout(r, wait * 1000))
+          try {
+            feedbacks = await client.getUnansweredFeedbacks()
+          } catch (e2) {
+            const msg = e2 instanceof RateLimitError
+              ? `Лимит WB всё ещё активен (429) — продолжится в следующем запуске`
+              : e2 instanceof Error ? e2.message : String(e2)
+            details.push(`⏳ ${target.name}: ${msg}`)
+            totalFailed++
+            continue
+          }
+        } else {
+          const msg = e instanceof Error ? e.message : String(e)
+          details.push(`❌ ${target.name}: ${msg.slice(0, 80)}`)
+          totalFailed++
+          continue
+        }
       }
       console.log(`[cron] ${target.name}: неотвеченных ${feedbacks.length}`)
 
@@ -109,7 +127,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`[cron] генерирую ответ для ${fb.id} (режим ${target.mode})`)
             const { answer, source } = await generateAnswer(input, target.mode)
             console.log(`[cron] ответ получен, отправляю на WB...`)
-            await client.answerFeedback(fb.id, answer)
+            try {
+              await client.answerFeedback(fb.id, answer)
+            } catch (e) {
+              if (e instanceof RateLimitError) {
+                // Лимит исчерпан: сохраняем отзыв как «ожидающий» и выходим из цикла —
+                // не стучимся дальше, остальные уйдут в следующем запуске
+                console.log(`[cron] 429 на ответе — прекращаю цикл, продолжится в следующем запуске`)
+                details.push(`⏳ ${target.name}: лимит WB, ${feedbacks.length - toAnswer.indexOf(fb)} отзывов ждут следующего запуска`)
+                break
+              }
+              throw e
+            }
             console.log(`[cron] отправлено, сохраняю в БД...`)
             totalAnswered++
             const stars = '★'.repeat(fb.productValuation ?? 0)

@@ -1,18 +1,8 @@
 // Клиент WB API «Вопросы и отзывы».
 // Документация: https://dev.wildberries.ru (feedbacks-api.wildberries.ru)
+// Rate limit: при 429 читаем X-RateLimit-Retry и ждём — не стучимся вслепую.
 
 const BASE_URL = 'https://feedbacks-api.wildberries.ru'
-
-export type WbFeedbackPhoto = {
-  /** Ссылка на фото (отдаётся WB API в photoLinks) */
-  src: string
-}
-
-export type WbFeedbackVideo = {
-  /** Ссылка на видео или превью (отдаётся WB API в video) */
-  src?: string
-  preview?: string
-}
 
 export type WbFeedback = {
   id: string
@@ -22,18 +12,23 @@ export type WbFeedback = {
   productValuation?: number
   createdDate?: string
   userName?: string
-  /** Фотографии покупателя */
   photoLinks?: string[]
-  /** Видео покупателя (объект с полями ссылки/превью) */
-  video?: WbFeedbackVideo | null
-  /** Категория товара (например «Футболки-поло») */
+  video?: { src?: string; preview?: string } | null
   subjectName?: string
-  /** Артикул, наименование и характеристики товара */
   productDetails?: {
     nmId?: number
     productName?: string
     imtId?: number
     [key: string]: unknown
+  }
+}
+
+export class RateLimitError extends Error {
+  /** Сколько секунд ждать до следующего запроса. */
+  retryAfterSec: number
+  constructor(retryAfterSec: number) {
+    super(`Превышен лимит WB (429), повтор через ${retryAfterSec}с`)
+    this.retryAfterSec = retryAfterSec
   }
 }
 
@@ -62,8 +57,11 @@ export class WbClient {
         throw new Error('Токен WB невалиден или не имеет доступа к отзывам (401)')
       case 402:
         throw new Error('Требуется оплата тарифа WB API (402)')
-      case 429:
-        throw new Error('Превышен лимит запросов WB (429)')
+      case 429: {
+        // WB сам сообщает, когда можно повторить. Если заголовка нет — ждём 15 минут.
+        const retry = Number(res.headers.get('x-ratelimit-retry') ?? '900')
+        throw new RateLimitError(Math.max(retry, 60))
+      }
     }
 
     if (!res.ok) {
