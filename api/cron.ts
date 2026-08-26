@@ -71,27 +71,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (const fb of feedbacks) {
         const video = fb.video ?? null
         const input: FeedbackInput = {
-          rating: fb.productValuation,
-          text: fb.text,
-          pros: fb.pros,
-          cons: fb.cons,
-          productName: fb.productDetails?.productName,
-          subjectName: fb.subjectName,
-          userName: fb.userName,
+          rating: fb.productValuation ?? undefined,
+          text: fb.text ?? undefined,
+          pros: fb.pros ?? undefined,
+          cons: fb.cons ?? undefined,
+          productName: fb.productDetails?.productName ?? undefined,
+          subjectName: fb.subjectName ?? undefined,
+          userName: fb.userName ?? undefined,
         }
         const media = {
-          nmId: fb.productDetails?.nmId,
-          productName: fb.productDetails?.productName,
-          subjectName: fb.subjectName,
-          userName: fb.userName,
-          rating: fb.productValuation,
-          text: fb.text,
-          pros: fb.pros,
-          cons: fb.cons,
+          nmId: fb.productDetails?.nmId ?? null,
+          productName: fb.productDetails?.productName ?? null,
+          subjectName: fb.subjectName ?? null,
+          userName: fb.userName ?? null,
+          rating: fb.productValuation ?? null,
+          text: fb.text ?? null,
+          pros: fb.pros ?? null,
+          cons: fb.cons ?? null,
           photoLinks: fb.photoLinks ?? [],
           videoUrl: video?.src ?? null,
           videoPreview: video?.preview ?? null,
-          createdDate: fb.createdDate,
+          createdDate: fb.createdDate ?? null,
         }
         try {
           if (target.mode === 'drafts') {
