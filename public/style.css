@@ -21,7 +21,7 @@ body {
   min-height: 100vh;
 }
 
-.screen[hidden] { display: none; }
+.screen[hidden] { display: none !important; }
 
 /* ---------- Auth ---------- */
 #auth-screen {
@@ -148,7 +148,7 @@ main {
   padding: 24px 20px 60px;
 }
 
-section[hidden] { display: none; }
+section[hidden] { display: none !important; }
 
 /* ---------- Cards ---------- */
 .card {
