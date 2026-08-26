@@ -107,7 +107,7 @@ function renderShops() {
     el.innerHTML = `<div class="empty"><span class="icon">🏪</span>Магазинов пока нет.<br>Добавьте первый выше — понадобится WB API токен.</div>`
     return
   }
-  const modeNames = { templates: 'Шаблоны', llm: 'LLM' }
+  const modeNames = { templates: 'Шаблоны', drafts: 'Черновики LLM', llm: 'LLM-авто' }
   for (const s of shopsCache) {
     const card = document.createElement('div')
     card.className = 'card shop-card'
@@ -121,7 +121,8 @@ function renderShops() {
       <div class="shop-actions">
         <select class="mode-select" data-id="${s.id}">
           <option value="templates" ${s.mode === 'templates' ? 'selected' : ''}>Шаблоны</option>
-          <option value="llm" ${s.mode === 'llm' ? 'selected' : ''}>LLM</option>
+          <option value="drafts" ${s.mode === 'drafts' ? 'selected' : ''}>Черновики LLM</option>
+          <option value="llm" ${s.mode === 'llm' ? 'selected' : ''}>LLM-авто</option>
         </select>
         <button class="ghost toggle" data-id="${s.id}">${s.enabled ? 'Выключить' : 'Включить'}</button>
         <button class="danger del" data-id="${s.id}" data-name="${esc(s.name)}">Удалить</button>
